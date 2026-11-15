@@ -422,7 +422,7 @@ public class SpeedrunPlus : BaseUnityPlugin
 		{
 			resetShown -= Time.unscaledDeltaTime;
 		}
-		GameManager silentInstance = GameManager.SilentInstance;
+		GameManager silentInstance = MadelineInPharloom.Lookup.Gm;
 		if (!Plugin.Ready || silentInstance == null || HeroController.UnsafeInstance == null || silentInstance.IsMenuScene())
 		{
 			return;
@@ -735,7 +735,7 @@ public class SpeedrunPlus : BaseUnityPlugin
 		bool flag4 = false;
 		try
 		{
-			flag3 = GameCameras.instance == null || GameCameras.instance.IsHudVisible;
+			flag3 = MadelineInPharloom.Lookup.Cams == null || MadelineInPharloom.Lookup.Cams.IsHudVisible;
 		}
 		catch (Exception)
 		{
@@ -743,7 +743,7 @@ public class SpeedrunPlus : BaseUnityPlugin
 		try
 		{
 			HeroController silentInstance = HeroController.UnsafeInstance;
-			GameManager silentInstance2 = GameManager.SilentInstance;
+			GameManager silentInstance2 = MadelineInPharloom.Lookup.Gm;
 			flag4 = (silentInstance != null && silentInstance.cState.transitioning) || (silentInstance2 != null && silentInstance2.IsInSceneTransition);
 		}
 		catch (Exception)
@@ -755,7 +755,7 @@ public class SpeedrunPlus : BaseUnityPlugin
 		{
 			return;
 		}
-		GameManager silentInstance3 = GameManager.SilentInstance;
+		GameManager silentInstance3 = MadelineInPharloom.Lookup.Gm;
 		if (!Plugin.Ready || silentInstance3 == null || HeroController.UnsafeInstance == null || silentInstance3.IsMenuScene() || !PostcardView.TutorialDone || silentInstance3.isPaused || AssistMode.IsOpen || BossCard.RecordsOpen || (PlayerData.instance != null && PlayerData.instance.isInventoryOpen))
 		{
 			return;
@@ -989,7 +989,7 @@ public class SpeedrunPlus : BaseUnityPlugin
 
 	private static void DrawInputs(GuiArt art, float y, float a, Color outline)
 	{
-		HeroActions heroActions = ManagerSingleton<InputHandler>.Instance?.inputActions;
+		HeroActions heroActions = MadelineInPharloom.Lookup.Input?.inputActions;
 		if (heroActions != null)
 		{
 			Key(70f, y, 34f, "^", P(heroActions.Up));

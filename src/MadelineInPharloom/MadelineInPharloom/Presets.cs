@@ -94,18 +94,18 @@ public static class Presets
 		PlayerData spd = PlayerData.instance;
 		// only once the loaded file's own settings are in use: right after switching files the mode is still the old
 		// file's, and a Standard file must never get Sandbox's unlocks (user 2026-10-22)
-		if (GameManager.SilentInstance != null && GameManager.SilentInstance.profileID != AssistMode.ProfileSlot)
+		if (Lookup.Gm != null && Lookup.Gm.profileID != AssistMode.ProfileSlot)
 		{
 			spd = null;
 		}
-		if (spd != null && AssistMode.ModeId == "sandbox" && !BossRematch.Active && (spd.silkRegenMax < 3 || spd.nailUpgrades < 4) && GameManager.SilentInstance != null && !GameManager.SilentInstance.IsMenuScene())
+		if (spd != null && AssistMode.ModeId == "sandbox" && !BossRematch.Active && (spd.silkRegenMax < 3 || spd.nailUpgrades < 4) && Lookup.Gm != null && !Lookup.Gm.IsMenuScene())
 		{
 			spd.silkRegenMax = Math.Max(spd.silkRegenMax, 3);
 			spd.HasSeenSilkHearts = true;
 			spd.nailUpgrades = Math.Max(spd.nailUpgrades, 4);
 		}
 		// a Sandbox file's Records list every boss for a rematch, fought or not
-		GameManager sgm = GameManager.SilentInstance;
+		GameManager sgm = Lookup.Gm;
 		if (spd != null && sgm != null && !sgm.IsMenuScene() && AssistMode.ModeId == "sandbox" && sandboxRecordsSlot != sgm.profileID)
 		{
 			sandboxRecordsSlot = sgm.profileID;
@@ -118,7 +118,7 @@ public static class Presets
 		// a Sandbox file that never got its unlocks (the mode was already Sandbox when the new file began, so
 		// Apply never ran this session: user 2026-10-22)
 		bool missing = spd != null && AssistMode.ModeId == "sandbox" && !TechRoom.Active && !BossRematch.Active && (!spd.hasSuperJump || !spd.mapAllRooms);
-		if ((!sandboxPending && !missing) || spd == null || HeroController.UnsafeInstance == null || GameManager.SilentInstance == null || GameManager.SilentInstance.IsMenuScene())
+		if ((!sandboxPending && !missing) || spd == null || HeroController.UnsafeInstance == null || Lookup.Gm == null || Lookup.Gm.IsMenuScene())
 		{
 			return;
 		}

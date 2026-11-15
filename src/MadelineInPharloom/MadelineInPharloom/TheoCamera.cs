@@ -74,7 +74,7 @@ public class TheoCamera : MonoBehaviour
 			showAfterCard = false;
 			showT = 0f;
 		}
-		GameManager silentInstance = GameManager.SilentInstance;
+		GameManager silentInstance = Lookup.Gm;
 		if (Plugin.Ready && !busy && !(silentInstance == null) && !(HeroController.UnsafeInstance == null) && !silentInstance.IsMenuScene())
 		{
 			bool flag = false;
@@ -97,7 +97,7 @@ public class TheoCamera : MonoBehaviour
 		busy = true;
 		Hiding = !withCard;
 		HidingHud = true;
-		Camera hud = ((GameCameras.instance != null) ? GameCameras.instance.hudCamera : null);
+		Camera hud = ((Lookup.Cams != null) ? Lookup.Cams.hudCamera : null);
 		bool hudWas = hud != null && hud.enabled;
 		if (hud != null)
 		{

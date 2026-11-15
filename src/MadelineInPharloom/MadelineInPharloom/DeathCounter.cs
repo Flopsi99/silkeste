@@ -51,7 +51,7 @@ public class DeathCounter : MonoBehaviour
 	{
 		float unscaledDeltaTime = Time.unscaledDeltaTime;
 		HeroController silentInstance = HeroController.UnsafeInstance;
-		GameManager silentInstance2 = GameManager.SilentInstance;
+		GameManager silentInstance2 = Lookup.Gm;
 		bool flag = false;
 		if (Plugin.Ready && silentInstance != null && silentInstance2 != null)
 		{
@@ -155,7 +155,7 @@ public class DeathCounter : MonoBehaviour
 		{
 			return;
 		}
-		GameManager silentInstance = GameManager.SilentInstance;
+		GameManager silentInstance = Lookup.Gm;
 		if (silentInstance == null)
 		{
 			return;

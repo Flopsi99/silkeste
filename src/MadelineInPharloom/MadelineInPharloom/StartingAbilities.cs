@@ -85,7 +85,7 @@ public class StartingAbilities : MonoBehaviour
 	/// <summary>The game set an ability flag itself (the real item): it's earned, so turning the row off keeps it.</summary>
 	private static void SetBoolPrefix(string boolName, bool value)
 	{
-		if (writing || !value || BossRematch.Active || GameManager.SilentInstance == null)
+		if (writing || !value || BossRematch.Active || Lookup.Gm == null)
 		{
 			return;
 		}
@@ -94,7 +94,7 @@ public class StartingAbilities : MonoBehaviour
 			if (a.Flag == boolName)
 			{
 				LoadState();
-				if (given.TryGetValue(GameManager.SilentInstance.profileID, out HashSet<string> set) && set.Remove(boolName))
+				if (given.TryGetValue(Lookup.Gm.profileID, out HashSet<string> set) && set.Remove(boolName))
 				{
 					SaveState();
 					Plugin.Log.LogInfo("Starting abilities: " + boolName + " found for real, kept");
@@ -172,7 +172,7 @@ public class StartingAbilities : MonoBehaviour
 	/// <summary>True when Silkeste gave this flag to the save in play (its unlock postcard is skipped).</summary>
 	public static bool WasGiven(string flag)
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm == null)
 		{
 			return false;
@@ -264,7 +264,7 @@ public class StartingAbilities : MonoBehaviour
 			}
 			return;
 		}
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		PlayerData pd = PlayerData.instance;
 		if (gm == null || HeroController.UnsafeInstance == null || pd == null || gm.IsMenuScene() || BossRematch.Active || AssistMode.ProfileSlot != gm.profileID)
 		{
@@ -352,7 +352,7 @@ public class StartingAbilities : MonoBehaviour
 			return;
 		}
 		Keyboard kb = Keyboard.current;
-		HeroActions a = ManagerSingleton<InputHandler>.Instance?.inputActions;
+		HeroActions a = Lookup.Input?.inputActions;
 		bool up = (kb != null && (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame)) || (a?.Up.WasPressed ?? false);
 		bool down = (kb != null && (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame)) || (a?.Down.WasPressed ?? false);
 		bool left = (kb != null && (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame)) || (a?.Left.WasPressed ?? false);

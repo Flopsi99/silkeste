@@ -297,7 +297,7 @@ public class TechRoom : MonoBehaviour
 		{
 			return;
 		}
-		InputHandler ih = ManagerSingleton<InputHandler>.Instance;
+		InputHandler ih = Lookup.Input;
 		HeroActions a = ih != null ? ih.inputActions : null;
 		Keyboard kb = Keyboard.current;
 		bool left = a != null && (a.Left.WasPressed || a.Up.WasPressed);
@@ -349,7 +349,7 @@ public class TechRoom : MonoBehaviour
 	private void Enter()
 	{
 		HeroController h = HeroController.UnsafeInstance;
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (Active || h == null || gm == null || Plugin.Atlas == null || Plugin.CelesteDir == null)
 		{
 			Plugin.Log.LogWarning("Tech tutorial: can't start here");
@@ -373,7 +373,7 @@ public class TechRoom : MonoBehaviour
 			Active = true;
 			spawn = 0;
 			Place(h, spawns[0]);
-			GameCameras gc = GameCameras.SilentInstance;
+			GameCameras gc = Lookup.Cams;
 			if (gc != null && gc.cameraController != null)
 			{
 				gc.cameraController.enabled = false;
@@ -402,7 +402,7 @@ public class TechRoom : MonoBehaviour
 			{
 				Place(h, returnTo, feet: false);
 			}
-			GameCameras gc = GameCameras.SilentInstance;
+			GameCameras gc = Lookup.Cams;
 			if (gc != null && gc.cameraController != null)
 			{
 				gc.cameraController.PositionToHero(forceDirect: true);
@@ -417,7 +417,7 @@ public class TechRoom : MonoBehaviour
 		Active = false;
 		Playbacks.Clear();
 		Plugin.Controller.InDream = false;
-		GameCameras gc = GameCameras.SilentInstance;
+		GameCameras gc = Lookup.Cams;
 		if (gc != null && gc.cameraController != null && !gc.cameraController.enabled)
 		{
 			gc.cameraController.enabled = true;
@@ -1199,7 +1199,7 @@ public class TechRoom : MonoBehaviour
 	{
 		float dt = Time.unscaledDeltaTime;
 		HeroController h = HeroController.UnsafeInstance;
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm != null && h != null)
 		{
 			ScanForEnemy(gm, dt);
@@ -1404,7 +1404,7 @@ public class TechRoom : MonoBehaviour
 			return;
 		}
 		HeroController h = HeroController.UnsafeInstance;
-		GameCameras gc = GameCameras.SilentInstance;
+		GameCameras gc = Lookup.Cams;
 		if (h == null || gc == null || gc.cameraController == null || gc.mainCamera == null)
 		{
 			return;
@@ -1943,7 +1943,7 @@ public class TechRoom : MonoBehaviour
 
 	private void WatchSlow()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (slowOn && (!Active || Time.unscaledTime - slowAt > 1.2f || gm == null || gm.isPaused))
 		{
 			EndSlow();
@@ -2131,7 +2131,7 @@ public class TechRoom : MonoBehaviour
 	/// <summary>Loads Tut_01b in the background for one MossBone Crawler, when none has been seen yet.</summary>
 	public static void PreloadCrawler()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (preloading || enemyScore >= 5 || gm == null || gm.sceneName == PreloadScene)
 		{
 			return;
@@ -2345,7 +2345,7 @@ public class TechRoom : MonoBehaviour
 		Instance.pendingLeave = true;
 		try
 		{
-			UIManager.instance.TogglePauseGame();
+			Lookup.Ui.TogglePauseGame();
 		}
 		catch (Exception e)
 		{

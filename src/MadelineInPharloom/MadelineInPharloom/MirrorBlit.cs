@@ -12,7 +12,7 @@ public class MirrorBlit : MonoBehaviour
 	{
 		get
 		{
-			GameManager silentInstance = GameManager.SilentInstance;
+			GameManager silentInstance = Lookup.Gm;
 			if (AssistMode.MirrorMode && silentInstance != null)
 			{
 				return !silentInstance.IsMenuScene();

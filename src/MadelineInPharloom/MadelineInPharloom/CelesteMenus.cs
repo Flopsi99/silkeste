@@ -455,7 +455,7 @@ public class CelesteMenus : MonoBehaviour
 			t += Time.unscaledDeltaTime;
 			yield return null;
 		}
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		bool paused = gm != null && !gm.IsMenuScene() && gm.isPaused;
 		try
 		{
@@ -530,7 +530,7 @@ public class CelesteMenus : MonoBehaviour
 	{
 		if (AssistMode.IsOpen || Time.unscaledTime - AssistMode.ClosedAt < 0.3f)
 		{
-			GameManager gm = GameManager.SilentInstance;
+			GameManager gm = Lookup.Gm;
 			if (gm != null && gm.isPaused)
 			{
 				__result = Nothing();
@@ -547,7 +547,7 @@ public class CelesteMenus : MonoBehaviour
 			BypassOptions = false;
 			return true;
 		}
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (SilksongOptions.FromBindings)
 		{
 			return true;   // coming back from the bindings: OptionsRoutine takes it from here
@@ -557,7 +557,7 @@ public class CelesteMenus : MonoBehaviour
 			// backing out of the keyboard or controller page: past Silksong's old Options, straight to Settings
 			SilksongOptions.FromBindings = false;
 			bool paused = gm != null && !gm.IsMenuScene() && gm.isPaused;
-			try { UIManager.instance.UILeaveOptionsMenu(); } catch (Exception) { }
+			try { Lookup.Ui.UILeaveOptionsMenu(); } catch (Exception) { }
 			Instance.Overlay();
 			AssistMode.OpenAtTab = "Controls";   // back where they left from
 			if (paused)
@@ -631,7 +631,7 @@ public class CelesteMenus : MonoBehaviour
 	private CanvasGroup FindScreen(out string k)
 	{
 		k = "";
-		UIManager instance = UIManager.instance;
+		UIManager instance = Lookup.Ui;
 		if (instance == null || CelesteFileSelect.Showing)
 		{
 			return null;
@@ -658,7 +658,7 @@ public class CelesteMenus : MonoBehaviour
 				return menuScreen2.ScreenCanvasGroup;
 			}
 		}
-		GameManager silentInstance = GameManager.SilentInstance;
+		GameManager silentInstance = Lookup.Gm;
 		if (instance.pauseMenuScreen != null && instance.pauseMenuScreen.gameObject.activeInHierarchy && silentInstance != null && silentInstance.isPaused && instance.pauseMenuScreen.ScreenCanvasGroup != null && instance.pauseMenuScreen.ScreenCanvasGroup.interactable)
 		{
 			k = "pause";
@@ -700,15 +700,15 @@ public class CelesteMenus : MonoBehaviour
 		{
 			sinceFiles += unscaledDeltaTime;
 		}
-		GameManager silentInstance = GameManager.SilentInstance;
-		skyOnly = canvasGroup == null && !CelesteFileSelect.Showing && sinceFiles < 1.5f && (silentInstance == null || silentInstance.IsMenuScene()) && UIManager.instance != null;
+		GameManager silentInstance = Lookup.Gm;
+		skyOnly = canvasGroup == null && !CelesteFileSelect.Showing && sinceFiles < 1.5f && (silentInstance == null || silentInstance.IsMenuScene()) && Lookup.Ui != null;
 		if (k == "title")
 		{
 			titleSeen = true;
 		}
 		// on the title scene with no menu up (also on the way back from a game, user 2026-10-20: Silksong's title
 		// showed for a moment after Quit to Menu), the Celeste sky covers it
-		if (canvasGroup == null && UIManager.instance != null && SceneManager.GetActiveScene().name == "Menu_Title")
+		if (canvasGroup == null && Lookup.Ui != null && SceneManager.GetActiveScene().name == "Menu_Title")
 		{
 			skyOnly = true;
 		}
@@ -721,18 +721,18 @@ public class CelesteMenus : MonoBehaviour
 			HideAll(skyOnly);
 			return;
 		}
-		GameManager silentInstance2 = GameManager.SilentInstance;
+		GameManager silentInstance2 = Lookup.Gm;
 		// Keep Silksong's own pause menu hidden until its fade-out after unpausing is over too,
 		// or it shows for a moment once ours is gone.
-		UIManager instance0 = UIManager.instance;
+		UIManager instance0 = Lookup.Ui;
 		bool pauseFading = instance0 != null && instance0.pauseMenuScreen != null && instance0.pauseMenuScreen.gameObject.activeInHierarchy && instance0.pauseMenuScreen.ScreenCanvasGroup != null && instance0.pauseMenuScreen.ScreenCanvasGroup.alpha > 0.01f && silentInstance2 != null && !silentInstance2.IsMenuScene();
 		HideAll(skyOnly || canvasGroup != null || screen != null || CelesteFileSelect.Showing || sinceFiles < 1.5f || pauseFading || (silentInstance2 != null && silentInstance2.isPaused && !silentInstance2.IsMenuScene()));
 		if (canvasGroup == null)
 		{
 			k = "";
 		}
-		GameManager silentInstance3 = GameManager.SilentInstance;
-		holding = canvasGroup == null && screen != null && (holdFor += unscaledDeltaTime) < 1.5f && UIManager.instance != null && (silentInstance3 == null || silentInstance3.IsMenuScene() || silentInstance3.isPaused);
+		GameManager silentInstance3 = Lookup.Gm;
+		holding = canvasGroup == null && screen != null && (holdFor += unscaledDeltaTime) < 1.5f && Lookup.Ui != null && (silentInstance3 == null || silentInstance3.IsMenuScene() || silentInstance3.isPaused);
 		if (holding)
 		{
 			return;
@@ -801,9 +801,9 @@ public class CelesteMenus : MonoBehaviour
 			{
 				current.SetSelectedGameObject(gameObject);
 			}
-			if (ManagerSingleton<InputHandler>.Instance != null)
+			if (Lookup.Input != null)
 			{
-				ManagerSingleton<InputHandler>.Instance.StartUIInput();
+				Lookup.Input.StartUIInput();
 			}
 		}
 		GameObject sel = ((current != null) ? current.currentSelectedGameObject : null);
@@ -916,7 +916,7 @@ public class CelesteMenus : MonoBehaviour
 
 	private void HideAll(bool on)
 	{
-		UIManager instance = UIManager.instance;
+		UIManager instance = Lookup.Ui;
 		if (instance == null || (!on && !CelesteFileSelect.Showing))
 		{
 			if (shrunk.Count <= 0)
@@ -1307,13 +1307,13 @@ public class CelesteMenus : MonoBehaviour
 			continueButton.onClick.AddListener(delegate
 			{
 				int slot = CelesteFileSelect.LastSlot;
-				if (slot < 0 || UIManager.instance == null)
+				if (slot < 0 || Lookup.Ui == null)
 				{
 					return;
 				}
 				Sfx.Play(Sounds.MenuButtonSelect.Id);
 				CelesteFileSelect.Continue(slot);
-				UIManager.instance.UIGoToProfileMenu();
+				Lookup.Ui.UIGoToProfileMenu();
 			});
 			Plugin.Log.LogInfo("Title: Continue added (save " + CelesteFileSelect.LastSlot + ")");
 		}
@@ -1724,7 +1724,7 @@ public class CelesteMenus : MonoBehaviour
 	private void ShowRemap()
 	{
 		ControllerDetect componentInChildren = screen.GetComponentInChildren<ControllerDetect>(includeInactive: true);
-		InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance = Lookup.Input;
 		if (!(componentInChildren == null) && !(componentInChildren.remapButton == null) && !(instance == null) && !(instance.gamepadState.ToString() == "DETACHED") && !componentInChildren.remapButton.gameObject.activeSelf)
 		{
 			componentInChildren.remapButton.gameObject.SetActive(value: true);
@@ -1811,7 +1811,7 @@ public class CelesteMenus : MonoBehaviour
 	// the pause menu's side card (user 2026-10-17): where you are, and this save's deaths, time and golden berries
 	private void DrawPauseInfo(float sw)
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm == null || OverlayOpen)
 		{
 			return;
@@ -1877,14 +1877,14 @@ public class CelesteMenus : MonoBehaviour
 	{
 		get
 		{
-			UIManager ui = UIManager.instance;
+			UIManager ui = Lookup.Ui;
 			return kind == "prompt" && ui != null && ((ui.quitGamePrompt != null && screen == ui.quitGamePrompt.ScreenCanvasGroup) || (ui.returnMainMenuPrompt != null && screen == ui.returnMainMenuPrompt.ScreenCanvasGroup));
 		}
 	}
 
 	private void DrawList(float sw, GameObject sel)
 	{
-		UIManager instance = UIManager.instance;
+		UIManager instance = Lookup.Ui;
 		bool flag = instance != null && ((instance.keyboardMenuScreen != null && screen == instance.keyboardMenuScreen.ScreenCanvasGroup) || (instance.remapGamepadMenuScreen != null && screen == instance.remapGamepadMenuScreen.ScreenCanvasGroup) || (instance.gamepadMenuScreen != null && screen == instance.gamepadMenuScreen.ScreenCanvasGroup));
 		float num = sw / 2f;
 		float num2 = (flag ? 640f : (kind == "pause" ? 480f : Math.Min(1100f, sw - 200f)));   // pause: a narrow bar that stays clear of the info card

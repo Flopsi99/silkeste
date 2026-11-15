@@ -65,7 +65,7 @@ public static class TechTips
 	{
 		get
 		{
-			GameManager gm = GameManager.SilentInstance;
+			GameManager gm = Lookup.Gm;
 			return gm != null ? gm.profileID : -1;
 		}
 	}
@@ -567,11 +567,11 @@ public static class TechTips
 		Sprite s = null;
 		try
 		{
-			InputHandler ih = ManagerSingleton<InputHandler>.Instance;
+			InputHandler ih = Lookup.Input;
 			if (skins == null && Now - skinsTried > 5f)
 			{
 				skinsTried = Now;
-				UIManager ui = UIManager.instance;
+				UIManager ui = Lookup.Ui;
 				skins = ui != null ? ui.uiButtonSkins : null;
 			}
 			if (ih != null && ih.inputActions != null && skins != null)
@@ -598,7 +598,7 @@ public static class TechTips
 		string s = dash ? "X" : "Z";
 		try
 		{
-			InputHandler ih = ManagerSingleton<InputHandler>.Instance;
+			InputHandler ih = Lookup.Input;
 			if (ih != null && ih.inputActions != null)
 			{
 				InputHandler.KeyOrMouseBinding b = ih.GetKeyBindingForAction(dash ? ih.inputActions.Attack : ih.inputActions.Jump);

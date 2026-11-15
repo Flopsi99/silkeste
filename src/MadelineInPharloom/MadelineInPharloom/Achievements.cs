@@ -420,7 +420,7 @@ public class Achievements : MonoBehaviour
 		if (!(Instance == null) && !StartingArea)
 		{
 			Achievements instance = Instance;
-			string text = ((GameManager.SilentInstance != null) ? GameManager.SilentInstance.sceneName : "");
+			string text = ((Lookup.Gm != null) ? Lookup.Gm.sceneName : "");
 			if (text != instance.pogoScene)
 			{
 				instance.pogoScene = text;
@@ -517,7 +517,7 @@ public class Achievements : MonoBehaviour
 			Save();
 		}
 		HeroController silentInstance = HeroController.UnsafeInstance;
-		GameManager silentInstance2 = GameManager.SilentInstance;
+		GameManager silentInstance2 = Lookup.Gm;
 		MadelineController controller = Plugin.Controller;
 		if (!Plugin.Ready || silentInstance == null || silentInstance2 == null || controller == null || silentInstance2.IsMenuScene())
 		{

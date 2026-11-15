@@ -47,7 +47,7 @@ public class RecordsHint : MonoBehaviour
 	private void Update()
 	{
 		padHints = TechTipsGui.PadNow;
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		HeroController h = HeroController.UnsafeInstance;
 		if (gm == null || h == null || gm.IsMenuScene())
 		{
@@ -87,7 +87,7 @@ public class RecordsHint : MonoBehaviour
 		glyph = null;
 		try
 		{
-			UIButtonSkins skins = UIManager.instance != null ? UIManager.instance.uiButtonSkins : null;
+			UIButtonSkins skins = Lookup.Ui != null ? Lookup.Ui.uiButtonSkins : null;
 			if (skins != null && SkinForControl != null)
 			{
 				glyph = (SkinForControl.Invoke(skins, new object[1] { InputControlType.Share }) as ButtonSkin)?.sprite;

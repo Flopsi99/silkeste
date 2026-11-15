@@ -33,7 +33,7 @@ public static class SilksongOptions
 	{
 		try
 		{
-			UIManager ui = UIManager.instance;
+			UIManager ui = Lookup.Ui;
 			if (ui == null)
 			{
 				return;
@@ -146,7 +146,7 @@ public static class SilksongOptions
 		if (r.Id == "ss_pausemenu_btn")
 		{
 			closeSettings();
-			GameManager gm = GameManager.SilentInstance;
+			GameManager gm = Lookup.Gm;
 			if (gm != null && !gm.isPaused)
 			{
 				CelesteMenus.AllowPause = true;
@@ -159,7 +159,7 @@ public static class SilksongOptions
 			Application.OpenURL("https://melty.gg/m/silkeste");
 			return;
 		}
-		UIManager ui = UIManager.instance;
+		UIManager ui = Lookup.Ui;
 		if (ui == null)
 		{
 			return;

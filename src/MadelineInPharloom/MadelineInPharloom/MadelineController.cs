@@ -888,7 +888,9 @@ public class MadelineController
 		return false;
 	}
 
-	public void ReadInput(HeroActions a)
+	private int blockedFrame = -10;
+
+	public void ReadInput(HeroActions a, bool canAct = true)
 	{
 		if (TechRoom.InputLocked)
 		{
@@ -901,11 +903,21 @@ public class MadelineController
 			return;
 		}
 		float num = (AssistMode.ForgivingJumps ? 0.16f : 0.08f);
-		if (a.Jump.WasPressed)
+		// a press while she can't act (inventory, pause, a menu, talking) is dropped, and so is one on the frame she
+		// gets control back. The inventory and pause freeze time, so no physics step ran to turn her off and clear the
+		// buffers: Attack pressed in the inventory (breaking a rosary string, closing it) dashed when it closed
+		// (YoukaiMisha 2026-11-13)
+		if (!canAct)
+		{
+			blockedFrame = Time.frameCount;
+			jumpBuffer = (dashBuffer = 0f);
+		}
+		bool hear = Time.frameCount - blockedFrame > 1;
+		if (hear && a.Jump.WasPressed)
 		{
 			jumpBuffer = num;
 		}
-		if (a.Attack.WasPressed)
+		if (hear && a.Attack.WasPressed)
 		{
 			dashBuffer = 0.08f;
 		}
@@ -1071,6 +1083,7 @@ public class MadelineController
 		}
 		UpdatePogoArming();
 		ProbeSpikes(h, dt);
+		float wind2 = WindPush(h, dt);
 		if (DashAttacking && OnGround && DashDir.y == 0f && !Ducking && Speed.x != 0f && moveX == -Math.Sign(Speed.x))
 		{
 			Particles.Dust(Feet(), -MathF.PI / 2f, 1);
@@ -1089,6 +1102,7 @@ public class MadelineController
 		{
 			linearVelocity.x = (float)Facing * 30f / 8f;
 		}
+		linearVelocity.x += wind2;
 		rigidbody2D.linearVelocity = linearVelocity;
 		if (Facing > 0 && !h.cState.facingRight)
 		{
@@ -1098,6 +1112,64 @@ public class MadelineController
 		{
 			h.FaceLeft();
 		}
+	}
+
+	// The wind in the Blasted Steps: the game only pushes Hornet sideways while she floats on her cloak
+	// (UmbrellaWindObject, switched on by her float script, which Madeline never runs). Madeline's glide is that move, so
+	// the same regions push her the same way while she glides: the regions' speeds added up, eased in at 5/s and out at
+	// 2/s, nothing inside an updraft (YoukaiMisha 2026-11-13: the wind did nothing to her)
+	private static readonly AccessTools.FieldRef<UmbrellaWindObject, List<UmbrellaWindRegion>> WindRegions = AccessTools.FieldRefAccess<UmbrellaWindObject, List<UmbrellaWindRegion>>("insideRegions");
+
+	private UmbrellaWindObject windObject;
+
+	private float windPush;
+
+	/// <summary>Dev: the wind regions she's in and what they'd push her with while gliding.</summary>
+	public string WindInfo(HeroController h)
+	{
+		UmbrellaWindObject o = h.GetComponent<UmbrellaWindObject>();
+		if (o == null)
+		{
+			return "no wind object on the hero";
+		}
+		float sum = 0f;
+		int n = 0;
+		foreach (UmbrellaWindRegion r in WindRegions(o))
+		{
+			if (r != null)
+			{
+				n++;
+				sum += r.SpeedX;
+			}
+		}
+		return "in " + n + " wind regions, push " + sum + " units/s while gliding (now " + windPush + ", gliding " + Gliding + ", game wind flag " + h.cState.inWindRegion + ", Hornet's float push on " + o.IsActive + ")";
+	}
+
+	private float WindPush(HeroController h, float dt)
+	{
+		if (!Gliding)
+		{
+			windPush = 0f;
+			return 0f;
+		}
+		if (windObject == null || windObject.gameObject != h.gameObject)
+		{
+			windObject = h.GetComponent<UmbrellaWindObject>();
+		}
+		float target = 0f;
+		if (windObject != null && !h.cState.inUpdraft)
+		{
+			foreach (UmbrellaWindRegion r in WindRegions(windObject))
+			{
+				if (r != null)
+				{
+					target += r.SpeedX;
+				}
+			}
+		}
+		float rate = (h.cState.inUpdraft ? 10f : ((target > windPush) ? 5f : 2f));
+		windPush = ((Math.Abs(target - windPush) < 0.001f) ? target : Mathf.Lerp(windPush, target, dt * rate));
+		return windPush;
 	}
 
 	private void Activate(HeroController h, Rigidbody2D rb)
@@ -1310,6 +1382,13 @@ public class MadelineController
 				{
 					continue;
 				}
+				// floor is under her feet, not around her middle: something she's inside of (a hatch lid swinging open
+				// through her after a Silk Soar into it, a door closing on her) held her up in mid-air, standing, ducking
+				// and with her dash back (YoukaiMisha 2026-11-15, "thick air")
+				if (EmbedRule && dyPx > 0f && colliderDistance2D.isValid && colliderDistance2D.distance < 0f && InBody(bounds, collider2D))
+				{
+					continue;
+				}
 			}
 			if (flag)
 			{
@@ -1322,12 +1401,42 @@ public class MadelineController
 					continue;
 				}
 			}
+			if (dxPx == 0f && dyPx > 0f)
+			{
+				LastGround = collider2D;
+			}
 			return true;
 		}
 		return false;
 	}
 
+	/// <summary>The collider her last ground check stood on (dev: the "feet" command).</summary>
+	public Collider2D LastGround;
+
 	private readonly Collider2D[] underFeet = new Collider2D[16];
+
+	/// <summary>Is there floor right under her feet this moment? A fresh check, also while Hornet's scripts move her.</summary>
+	public bool FloorUnder(HeroController h)
+	{
+		return Solid(h, 0f, 1f);
+	}
+
+	/// <summary>Dev: off to see the "thick air" bug again.</summary>
+	public static bool EmbedRule = true;
+
+	// does this collider reach into the middle of her body (the middle half of her width, from 4 px above her feet up)?
+	private bool InBody(Bounds bounds, Collider2D c)
+	{
+		float lift = 0.5f;
+		float height = bounds.size.y - lift - 0.04f;
+		if (height <= 0f)
+		{
+			return false;
+		}
+		Vector2 center = new Vector2(bounds.center.x, bounds.min.y + lift + height * 0.5f);
+		int n = Physics2D.OverlapBoxNonAlloc(center, new Vector2(bounds.size.x * 0.5f, height), 0f, underFeet, 33562880);
+		return Array.IndexOf(underFeet, c, 0, n) >= 0;
+	}
 
 	// a thin strip just under the middle half of her feet, clear of the walls at her sides
 	private bool UnderFeet(Bounds bounds, float dyPx, Collider2D c)
@@ -2470,6 +2579,29 @@ public class MadelineController
 		pendingSkillAt = Time.time;
 	}
 
+	// Hornet's needle swings make noise (HeroController.SlashNoiseMaker...), and some things only react to noise: the
+	// sleeping Skull Tyrant in the Marrow wakes when he hears one nearby. Madeline's dash is her attack, so it makes
+	// the same noise, in the direction she dashes (YoukaiMisha 2026-11-13: he never woke up for her)
+	private void DashNoise(HeroController h)
+	{
+		try
+		{
+			NoiseMaker n = ((DashDir.y < -0.5f) ? h.SlashNoiseMakerAbove : ((DashDir.y > 0.5f) ? h.SlashNoiseMakerBelow : h.SlashNoiseMakerFront));
+			if (n == null)
+			{
+				n = h.SlashNoiseMakerFront;
+			}
+			if (n != null)
+			{
+				n.CreateNoise();
+			}
+		}
+		catch (Exception e)
+		{
+			Plugin.Log.LogWarning("Dash noise: " + e.Message);
+		}
+	}
+
 	private int StartDash()
 	{
 		wasDashB = Dashes == 2 && MaxDashes == 2;
@@ -2538,6 +2670,7 @@ public class MadelineController
 			}
 			Speed = speed;
 			DashDir = vector;
+			DashNoise(h);
 			dashedDown = vector.y > 0f;
 			MoveStats.Dashes++;
 			LastDashTime = Time.time;

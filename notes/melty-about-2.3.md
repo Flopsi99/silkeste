@@ -10,6 +10,10 @@
 - **Make her yours:** 11 skins, 29 hair colours, hats, a Celeste companion (the bird, berries, a crystal heart...), auras and emotes.
 - **Feels like Celeste:** the title screen, menus and save files look like Celeste's, conversations use Celeste's text boxes, dying plays Celeste's death burst and respawn, and resting at a bench is like sitting by Celeste's campfire.
 
+### New in 2.4.1
+- **Bug fixes:** save and quit no longer freezes the main menu, the Skull Tyrant wakes up for Madeline, and Hornet no longer shows in the cold death on Mount Fay or when you get the Faydown Cloak.
+- **Small things:** no surprise dash after closing the inventory, and the Blasted Steps wind pushes her while she glides.
+
 ### New in 2.4
 - **Its own save files:** Silkeste has 4 save files of its own, apart from Silksong's, so you never have to delete a Hornet or modded file to play. Files you played with Silkeste move over by themselves (after a backup of all your saves), and an empty file can copy in any Silksong save.
 - **Records per save file,** with all-time bests under All Saves, a Reset stats button for each boss, and Records in the pause menu.

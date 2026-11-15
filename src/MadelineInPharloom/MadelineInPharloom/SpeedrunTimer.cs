@@ -118,7 +118,7 @@ public class SpeedrunTimer : MonoBehaviour
 				SaveTimes();
 			}
 			slot = profile;
-			GameManager silentInstance = GameManager.SilentInstance;
+			GameManager silentInstance = Lookup.Gm;
 			if (silentInstance != null)
 			{
 				ReadOtherSaves(silentInstance);
@@ -180,8 +180,8 @@ public class SpeedrunTimer : MonoBehaviour
 		{
 			return;
 		}
-		GameManager silentInstance = GameManager.SilentInstance;
-		InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+		GameManager silentInstance = Lookup.Gm;
+		InputHandler instance = Lookup.Input;
 		if (silentInstance == null || instance == null || silentInstance.GameState != GameState.CUTSCENE || instance.skippingCutscene || silentInstance.isPaused)
 		{
 			return;
@@ -208,7 +208,7 @@ public class SpeedrunTimer : MonoBehaviour
 				Plugin.Log.LogError("Auto-skip: " + ex);
 			}
 		}
-		GameManager silentInstance = GameManager.SilentInstance;
+		GameManager silentInstance = Lookup.Gm;
 		HeroController silentInstance2 = HeroController.UnsafeInstance;
 		if (!Plugin.Ready || silentInstance == null || silentInstance2 == null || silentInstance.IsMenuScene())
 		{
@@ -251,9 +251,9 @@ public class SpeedrunTimer : MonoBehaviour
 	private static bool IsLoading(GameManager gm, HeroController hero)
 	{
 		GameState gameState = gm.GameState;
-		UIManager instance = UIManager.instance;
+		UIManager instance = Lookup.Ui;
 		UIState uIState = ((instance != null) ? instance.uiState : UIState.PLAYING);
-		InputHandler instance2 = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance2 = Lookup.Input;
 		bool flag = instance2 == null || instance2.acceptingInput;
 		bool flag2 = PlayerData.instance != null && PlayerData.instance.isInventoryOpen;
 		string text = gm.sceneName ?? "";
@@ -292,7 +292,7 @@ public class SpeedrunTimer : MonoBehaviour
 		bool flag = true;
 		try
 		{
-			flag = GameCameras.instance == null || GameCameras.instance.IsHudVisible;
+			flag = Lookup.Cams == null || Lookup.Cams.IsHudVisible;
 		}
 		catch (Exception)
 		{
@@ -301,7 +301,7 @@ public class SpeedrunTimer : MonoBehaviour
 		try
 		{
 			HeroController silentInstance = HeroController.UnsafeInstance;
-			GameManager silentInstance2 = GameManager.SilentInstance;
+			GameManager silentInstance2 = Lookup.Gm;
 			flag2 = (silentInstance != null && silentInstance.cState.transitioning) || (silentInstance2 != null && silentInstance2.IsInSceneTransition);
 		}
 		catch (Exception)
@@ -313,7 +313,7 @@ public class SpeedrunTimer : MonoBehaviour
 		{
 			return;
 		}
-		GameManager silentInstance3 = GameManager.SilentInstance;
+		GameManager silentInstance3 = Lookup.Gm;
 		if (!Plugin.Ready || silentInstance3 == null || HeroController.UnsafeInstance == null || silentInstance3.IsMenuScene() || !PostcardView.TutorialDone || silentInstance3.isPaused || AssistMode.IsOpen || BossCard.RecordsOpen || (PlayerData.instance != null && PlayerData.instance.isInventoryOpen))
 		{
 			return;

@@ -97,7 +97,7 @@ public class CutsceneFx : MonoBehaviour
 
 	private static bool InCutscene()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm == null || gm.IsMenuScene() || gm.isPaused || BossRematch.Active)
 		{
 			return false;

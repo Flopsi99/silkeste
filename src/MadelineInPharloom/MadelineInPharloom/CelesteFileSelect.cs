@@ -199,7 +199,7 @@ public class CelesteFileSelect : MonoBehaviour
 	// file screen underneath show for a few frames (user 2026-11-10). Not while Silksong asks something itself.
 	private bool HoldAfterBegin(bool silksongAsks)
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		bool inMenu = gm == null || gm.IsMenuScene();
 		return begun && inMenu && !silksongAsks && Time.unscaledTime - begunAt < 8f;
 	}
@@ -255,7 +255,7 @@ public class CelesteFileSelect : MonoBehaviour
 		try
 		{
 			b.ClearCache();
-			b.ResetButton(GameManager.instance);
+			b.ResetButton(Lookup.Gm);
 		}
 		catch (Exception e)
 		{
@@ -312,7 +312,7 @@ public class CelesteFileSelect : MonoBehaviour
 				return b.saveFileState != SaveSlotButton.SaveFileStates.Empty;
 			}
 		}
-		return PlayerData.instance != null && GameManager.SilentInstance != null && GameManager.SilentInstance.profileID == slot && !GameManager.SilentInstance.IsMenuScene();
+		return PlayerData.instance != null && Lookup.Gm != null && Lookup.Gm.profileID == slot && !Lookup.Gm.IsMenuScene();
 	}
 
 	// any delete (Silkeste's file select or Silksong's own prompt) resets that file: Standard, Normal, no head start
@@ -512,7 +512,7 @@ public class CelesteFileSelect : MonoBehaviour
 			}
 		}
 		Keyboard current5 = Keyboard.current;
-		InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance = Lookup.Input;
 		HeroActions heroActions = ((instance != null) ? instance.inputActions : null);
 		InControl.InputDevice inputDevice = null;
 		try
@@ -882,7 +882,7 @@ public class CelesteFileSelect : MonoBehaviour
 		}
 		index = Mathf.Clamp(index, 0, ordered.Count - 1);
 		Keyboard current5 = Keyboard.current;
-		InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance = Lookup.Input;
 		HeroActions heroActions = ((instance != null) ? instance.inputActions : null);
 		bool flag2 = (current5 != null && (current5.upArrowKey.wasPressedThisFrame || current5.wKey.wasPressedThisFrame)) || (heroActions?.Up.WasPressed ?? false);
 		bool num2 = (current5 != null && (current5.downArrowKey.wasPressedThisFrame || current5.sKey.wasPressedThisFrame)) || (heroActions?.Down.WasPressed ?? false);

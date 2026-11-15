@@ -378,7 +378,7 @@ public class LoadingRunner : MonoBehaviour
 		{
 			menus = UnityEngine.Object.FindObjectOfType<CelesteMenus>();
 		}
-		GameManager silentInstance = GameManager.SilentInstance;
+		GameManager silentInstance = MadelineInPharloom.Lookup.Gm;
 		if (silentInstance == null || !silentInstance.IsMenuScene() || menus == null || !CelesteMenus.Showing || menus.kind != "title" || menus.holding || menus.alpha < 0.99f || CelesteFileSelect.Showing || CelesteMenus.OverlayOpen || AssistMode.IsOpen || BossCard.RecordsOpen)
 		{
 			return;

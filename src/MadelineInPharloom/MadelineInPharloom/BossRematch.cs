@@ -290,6 +290,7 @@ public class BossRematch : MonoBehaviour
 				}
 			}
 			h.Patch(AccessTools.Method(typeof(HeroController), "CanPlayNeedolin"), null, new HarmonyMethod(typeof(BossRematch), "NeedolinPostfix"));
+			h.Patch(AccessTools.Method(typeof(HeroController), "CanSuperJump"), null, new HarmonyMethod(typeof(BossRematch), "SoarPostfix"));
 			h.Patch(AccessTools.Method(typeof(UIManager), "UIShowReturnMenuPrompt"), new HarmonyMethod(typeof(BossRematch), "QuitPrefix"));
 			h.Patch(AccessTools.Method(typeof(UIManager), "UIReturnToMainMenu"), new HarmonyMethod(typeof(BossRematch), "QuitPrefix"));
 			h.Patch(AccessTools.Method(typeof(SceneAdditiveLoadConditional), "TryTestLoad"), null, new HarmonyMethod(typeof(BossRematch), "LoaderPostfix"));
@@ -323,6 +324,22 @@ public class BossRematch : MonoBehaviour
 		}
 	}
 
+	// Silk Soar starts from the ground, and the game takes "on the ground" from a flag. With Madeline that flag could
+	// still say yes in the air (right after a Silk Soar ended against a ceiling hatch, say): pressing Silk Soar again
+	// there started a second one in mid-air, and while it charged the game held her still, so she stood and crouched
+	// on nothing (YoukaiMisha 2026-11-15, "thick air"). Now it also needs real floor under her feet, checked right then.
+	private static void SoarPostfix(HeroController __instance, ref bool __result)
+	{
+		if (__result && __instance != null && Plugin.Controller != null && !Plugin.Controller.FloorUnder(__instance))
+		{
+			__result = false;
+			if (MadelineTouches.DevOn)
+			{
+				Plugin.Log.LogInfo("Silk Soar refused: no floor under her (the game's ground flag said " + __instance.cState.onGround + ")");
+			}
+		}
+	}
+
 	// Madeline moves herself, so Hornet's own "standing on the ground" flag stays off and the Needolin never starts:
 	// let it play whenever Madeline is standing still on the ground (user 2026-10-17)
 	private static float needolinLogAt;
@@ -341,7 +358,7 @@ public class BossRematch : MonoBehaviour
 		}
 		MadelineController c = Plugin.Controller;
 		HeroController h = __instance;
-		if (c != null && c.Active && c.OnGround && c.State != 2 && h.HasNeedolin() && !h.playerData.isInventoryOpen && !h.controlReqlinquished && h.hero_state != GlobalEnums.ActorStates.no_input && !h.cState.transitioning && !h.cState.hazardDeath && !h.cState.hazardRespawning && !h.cState.recoiling && GameManager.SilentInstance != null && !GameManager.SilentInstance.isPaused)
+		if (c != null && c.Active && c.OnGround && c.State != 2 && h.HasNeedolin() && !h.playerData.isInventoryOpen && !h.controlReqlinquished && h.hero_state != GlobalEnums.ActorStates.no_input && !h.cState.transitioning && !h.cState.hazardDeath && !h.cState.hazardRespawning && !h.cState.recoiling && Lookup.Gm != null && !Lookup.Gm.isPaused)
 		{
 			__result = true;
 		}
@@ -360,7 +377,7 @@ public class BossRematch : MonoBehaviour
 
 	private IEnumerator GiveUp()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm != null && gm.isPaused)
 		{
 			yield return gm.StartCoroutine(gm.PauseGameToggleByMenu());
@@ -394,7 +411,7 @@ public class BossRematch : MonoBehaviour
 			yield return null;
 		}
 		yield return new WaitForSecondsRealtime(1f);
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		HeroController h = HeroController.UnsafeInstance;
 		if (!Active || activeFlag != flag || gm == null || h == null || h.cState.dead || !string.Equals(SceneManager.GetActiveScene().name, arenaScene, StringComparison.OrdinalIgnoreCase))
 		{
@@ -801,7 +818,7 @@ public class BossRematch : MonoBehaviour
 		h.transform.position = boss.transform.position + new Vector3(off.x, off.y, 0f);
 		try
 		{
-			GameCameras.instance?.cameraController?.PositionToHeroInstant(forceDirect: true);
+			Lookup.Cams?.cameraController?.PositionToHeroInstant(forceDirect: true);
 		}
 		catch (Exception)
 		{
@@ -867,7 +884,7 @@ public class BossRematch : MonoBehaviour
 
 	private IEnumerator FromPause(string f)
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm != null && gm.isPaused)
 		{
 			yield return gm.StartCoroutine(gm.PauseGameToggleByMenu());
@@ -901,7 +918,7 @@ public class BossRematch : MonoBehaviour
 			yield return null;
 		}
 		yield return new WaitForSecondsRealtime(0.25f);
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		HeroController h = HeroController.UnsafeInstance;
 		PlayerData pd = PlayerData.instance;
 		if (gm == null || h == null || pd == null || gm.IsMenuScene())
@@ -1064,20 +1081,24 @@ public class BossRematch : MonoBehaviour
 			{
 				EmoteMenu.Open();   // a look at the Emotes menu
 			}
+			else if (p[0] == "quitmenu" && Lookup.Ui != null)
+			{
+				Lookup.Ui.UIReturnToMainMenu();   // the pause menu's Save & Quit (2.4.0 hung on the way back to the title)
+			}
 			else if (p[0] == "startmenu")
 			{
 				StartingAbilities.OpenMenu(null);   // a look at the starting abilities prompt; Begin just closes it
 			}
-			else if (p[0] == "load" && p.Length > 1 && UIManager.instance != null)
+			else if (p[0] == "load" && p.Length > 1 && Lookup.Ui != null)
 			{
-				if (UIManager.instance.uiState != GlobalEnums.UIState.MAIN_MENU_HOME)
+				if (Lookup.Ui.uiState != GlobalEnums.UIState.MAIN_MENU_HOME)
 				{
 					// too early (the title still loading) breaks the menus, Esc included, until a restart
 					Plugin.Log.LogInfo("  load: the main menu isn't up yet");
 					return;
 				}
 				CelesteFileSelect.Continue(int.Parse(p[1]));
-				UIManager.instance.UIGoToProfileMenu();
+				Lookup.Ui.UIGoToProfileMenu();
 			}
 			else if (p[0] == "rematch" && p.Length > 1)
 			{
@@ -1110,8 +1131,9 @@ public class BossRematch : MonoBehaviour
 				{
 					if (fsm != null && (fsm.gameObject.name + "/" + fsm.FsmName).Replace(" ", "_") == p[1])
 					{
-						fsm.SendEvent(p[2]);
-						Plugin.Log.LogInfo("  sent " + p[2] + " to " + p[1]);
+						string evName = string.Join(" ", p, 2, p.Length - 2);   // event names can have spaces
+						fsm.SendEvent(evName);
+						Plugin.Log.LogInfo("  sent " + evName + " to " + p[1]);
 					}
 				}
 			}
@@ -1242,6 +1264,223 @@ public class BossRematch : MonoBehaviour
 				HeroController h = HeroController.UnsafeInstance;
 				Plugin.Log.LogInfo("  hero " + (h != null ? h.transform.position.ToString() + " dead " + h.cState.dead + " relinquished " + h.controlReqlinquished : "none") + " scene " + SceneManager.GetActiveScene().name);
 			}
+			else if (p[0] == "scene" && p.Length > 2 && Lookup.Gm != null)
+			{
+				// straight into a room through one of its gates
+				Lookup.Gm.BeginSceneTransition(new GameManager.SceneLoadInfo
+				{
+					SceneName = p[1],
+					EntryGateName = p[2],
+					EntryDelay = 0f,
+					Visualization = GameManager.SceneLoadVisualizations.Default,
+					WaitForSceneTransitionCameraFade = true,
+					AlwaysUnloadUnusedAssets = true
+				});
+			}
+			else if (p[0] == "pd" && p.Length > 1)
+			{
+				// read (or set, with 0/1) a save flag
+				PlayerData pd = PlayerData.instance;
+				if (p.Length > 2)
+				{
+					pd.SetBool(p[1], p[2] == "1");
+				}
+				Plugin.Log.LogInfo("  pd " + p[1] + " = " + pd.GetBool(p[1]));
+			}
+			else if (p[0] == "frostdeath")
+			{
+				HeroController h = HeroController.UnsafeInstance;
+				if (h != null)
+				{
+					h.TakeFrostDamage(999);   // the Mount Fay cold death
+				}
+			}
+			else if (p[0] == "near")
+			{
+				// everything drawn near the hero (what still shows Hornet?)
+				HeroController h = HeroController.UnsafeInstance;
+				float rad = p.Length > 1 ? float.Parse(p[1], System.Globalization.CultureInfo.InvariantCulture) : 5f;
+				foreach (Renderer r in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+				{
+					if (h == null || r == null || !r.enabled || r.forceRenderingOff || r.GetType().Name == "ParticleSystemRenderer" || Vector2.Distance(r.bounds.center, h.transform.position) > rad)
+					{
+						continue;
+					}
+					tk2dBaseSprite sp = r.GetComponent<tk2dBaseSprite>();
+					tk2dSpriteAnimator an = r.GetComponent<tk2dSpriteAnimator>();
+					SpriteRenderer sr = r as SpriteRenderer;
+					string what = sp != null ? "tk2d " + (sp.Collection != null ? sp.Collection.name : "-") + (an != null && an.CurrentClip != null ? " clip " + an.CurrentClip.name : "") : (sr != null ? "sprite " + (sr.sprite != null ? sr.sprite.name : "-") : r.GetType().Name);
+					Plugin.Log.LogInfo("  near " + PathOf(r.transform) + " | " + what + " | layer " + r.gameObject.layer + " size " + (Vector2)r.bounds.size);
+				}
+			}
+			else if (p[0] == "feet")
+			{
+				// what she's standing on, and every solid thing touching her
+				HeroController h = HeroController.UnsafeInstance;
+				MadelineController c = Plugin.Controller;
+				if (h != null && c != null)
+				{
+					Collider2D me = h.GetComponent<Collider2D>();
+					Plugin.Log.LogInfo("  feet: active " + c.Active + " ground " + c.OnGround + " state " + c.State + " hero layer " + h.gameObject.layer + " box " + (me != null ? me.bounds.ToString() : "-") + " accepting " + h.acceptingInput + " relinquished " + h.controlReqlinquished + " cState.onGround " + h.cState.onGround + " clip " + (h.GetComponent<tk2dSpriteAnimator>()?.CurrentClip?.name ?? "-"));
+					Plugin.Log.LogInfo("  feet: wind: " + c.WindInfo(h));
+					Collider2D g = c.LastGround;
+					Plugin.Log.LogInfo("  feet: last ground " + (g != null ? PathOf(g.transform) + " " + g.GetType().Name + " layer " + g.gameObject.layer + " box " + g.bounds : "none"));
+					if (me != null)
+					{
+						foreach (Collider2D o in Physics2D.OverlapBoxAll(me.bounds.center, (Vector2)me.bounds.size + new Vector2(0.5f, 0.5f), 0f))
+						{
+							if (o != null && o != me && !o.transform.IsChildOf(h.transform))
+							{
+								Plugin.Log.LogInfo("  feet: touching " + PathOf(o.transform) + " " + o.GetType().Name + " layer " + o.gameObject.layer + (o.isTrigger ? " trigger" : " SOLID") + " effector " + o.usedByEffector + " ignored " + Physics2D.GetIgnoreCollision(me, o) + " box " + o.bounds);
+							}
+						}
+					}
+				}
+			}
+			else if (p[0] == "fsmstates" && p.Length > 1)
+			{
+				// every step of every script on the objects with this name
+				string want = cmd.Substring(10).Trim();
+				foreach (PlayMakerFSM fsm in UnityEngine.Object.FindObjectsByType<PlayMakerFSM>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+				{
+					if (fsm != null && fsm.gameObject.name.IndexOf(want, StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						Plugin.Log.LogInfo("  fsmstates " + PathOf(fsm.transform) + "/" + fsm.FsmName + " state=" + fsm.ActiveStateName + (fsm.gameObject.activeInHierarchy ? "" : " (off)"));
+						foreach (HutongGames.PlayMaker.FsmTransition tr in fsm.FsmGlobalTransitions)
+						{
+							Plugin.Log.LogInfo("    global " + tr.EventName + " -> " + tr.ToState);
+						}
+						DumpStates(fsm.FsmStates);
+					}
+				}
+			}
+			else if (p[0] == "dash")
+			{
+				// one dash the way she faces, as if the button was pressed
+				Plugin.Controller.InjectInput(0, 0, Vector2.zero, false, false, true, false);
+			}
+			else if (p[0] == "noise")
+			{
+				// Hornet's attack noise makers
+				HeroController h = HeroController.UnsafeInstance;
+				foreach (NoiseMaker n in h != null ? h.GetComponentsInChildren<NoiseMaker>(true) : new NoiseMaker[0])
+				{
+					Plugin.Log.LogInfo("  noise maker " + PathOf(n.transform) + " radius " + AccessTools.Field(typeof(NoiseMaker), "radius").GetValue(n) + " offset " + AccessTools.Field(typeof(NoiseMaker), "originOffset").GetValue(n) + " onEnable " + AccessTools.Field(typeof(NoiseMaker), "createNoiseOnEnable").GetValue(n) + (n == h.SlashNoiseMakerFront ? " = front" : "") + (n == h.SlashNoiseMakerAbove ? " = above" : "") + (n == h.SlashNoiseMakerBelow ? " = below" : ""));
+				}
+			}
+			else if (p[0] == "find" && p.Length > 1)
+			{
+				// every object (off ones too) with this in its name: where it is, what's on it, what it draws
+				string want = cmd.Substring(5).Trim();
+				int shown = 0;
+				foreach (Transform t in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+				{
+					if (t == null || t.name.IndexOf(want, StringComparison.OrdinalIgnoreCase) < 0 || shown++ > 40)
+					{
+						continue;
+					}
+					List<string> comps = new List<string>();
+					foreach (Component c in t.GetComponents<Component>())
+					{
+						if (c == null || c is Transform)
+						{
+							continue;
+						}
+						string extra = "";
+						if (c is tk2dBaseSprite sp)
+						{
+							extra = "[" + (sp.Collection != null ? sp.Collection.name : "-") + "]";
+						}
+						else if (c is tk2dSpriteAnimator an)
+						{
+							extra = "[" + (an.Library != null ? an.Library.name : "-") + " clip " + (an.CurrentClip != null ? an.CurrentClip.name : "-") + "]";
+						}
+						else if (c is SpriteRenderer sr)
+						{
+							extra = "[" + (sr.sprite != null ? sr.sprite.name : "-") + "]";
+						}
+						else if (c is PlayMakerFSM f)
+						{
+							extra = "[" + f.FsmName + " @" + f.ActiveStateName + "]";
+						}
+						else if (c is Collider2D col)
+						{
+							extra = "[layer " + t.gameObject.layer + (col.isTrigger ? " trigger" : " solid") + " " + col.bounds + "]";
+						}
+						comps.Add(c.GetType().Name + extra);
+					}
+					Plugin.Log.LogInfo("  find " + PathOf(t) + (t.gameObject.activeInHierarchy ? "" : " (off)") + " @" + (Vector2)t.position + " children " + t.childCount + ": " + string.Join(", ", comps.ToArray()));
+				}
+			}
+			else if (p[0] == "soar")
+			{
+				// a Silk Soar from where she stands, as if it was charged
+				HeroController h = HeroController.UnsafeInstance;
+				if (h != null && h.superJumpFSM != null)
+				{
+					h.AddSilk(9, false);
+					h.superJumpFSM.SendEvent("DO MOVE");
+					StartCoroutine(SoarTrack(h));
+				}
+			}
+			else if (p[0] == "setstate" && p.Length > 2)
+			{
+				// put a script straight into one of its steps (to play a cutscene without the keys that start it)
+				foreach (PlayMakerFSM fsm in UnityEngine.Object.FindObjectsByType<PlayMakerFSM>(FindObjectsSortMode.None))
+				{
+					if (fsm != null && (fsm.gameObject.name + "/" + fsm.FsmName).Replace(" ", "_") == p[1])
+					{
+						string st = string.Join(" ", p, 2, p.Length - 2);
+						fsm.SetState(st);
+						Plugin.Log.LogInfo("  " + p[1] + " now in " + fsm.ActiveStateName);
+					}
+				}
+			}
+			else if (p[0] == "tree" && p.Length > 1)
+			{
+				// everything under the objects with this name: colliders and what they draw
+				string want = cmd.Substring(5).Trim();
+				foreach (Transform root in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+				{
+					if (root == null || root.name != want)
+					{
+						continue;
+					}
+					foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+					{
+						List<string> comps = new List<string>();
+						foreach (Component c in t.GetComponents<Component>())
+						{
+							if (c == null || c is Transform)
+							{
+								continue;
+							}
+							Collider2D col = c as Collider2D;
+							SpriteRenderer sr = c as SpriteRenderer;
+							comps.Add(c.GetType().Name + (col != null ? "[layer " + t.gameObject.layer + (col.isTrigger ? " trigger" : " SOLID") + (col.enabled ? "" : " disabled") + " " + col.bounds + "]" : "") + (sr != null ? "[" + (sr.sprite != null ? sr.sprite.name : "-") + "]" : ""));
+						}
+						Plugin.Log.LogInfo("  tree " + PathOf(t) + (t.gameObject.activeInHierarchy ? "" : " (off)") + " @" + (Vector2)t.position + ": " + string.Join(", ", comps.ToArray()));
+					}
+				}
+			}
+			else if (p[0] == "setactive" && p.Length > 2)
+			{
+				// switch the objects with this name on (1) or off (0)
+				string want = string.Join(" ", p, 2, p.Length - 2);
+				foreach (Transform t in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+				{
+					if (t != null && t.name == want)
+					{
+						t.gameObject.SetActive(p[1] == "1");
+						Plugin.Log.LogInfo("  " + PathOf(t) + " active " + t.gameObject.activeInHierarchy);
+					}
+				}
+			}
+			else if (p[0] == "embed" && p.Length > 1)
+			{
+				MadelineController.EmbedRule = p[1] == "1";
+				Plugin.Log.LogInfo("  embed rule " + MadelineController.EmbedRule);
+			}
 			else if (p[0] == "track")
 			{
 				StartCoroutine(Track(p.Length > 1 ? float.Parse(p[1], System.Globalization.CultureInfo.InvariantCulture) : 5f));
@@ -1263,7 +1502,7 @@ public class BossRematch : MonoBehaviour
 	private void DumpNeedolin()
 	{
 		HeroController h = HeroController.UnsafeInstance;
-		if (!MadelineTouches.DevOn || h == null || GameManager.SilentInstance == null || GameManager.SilentInstance.IsMenuScene())
+		if (!MadelineTouches.DevOn || h == null || Lookup.Gm == null || Lookup.Gm.IsMenuScene())
 		{
 			return;
 		}
@@ -1336,6 +1575,28 @@ public class BossRematch : MonoBehaviour
 		return "";
 	}
 
+	// dev: where she is and what she stands on, five times a second for six seconds after a test Silk Soar
+	private IEnumerator SoarTrack(HeroController h)
+	{
+		for (int i = 0; i < 30 && h != null; i++)
+		{
+			MadelineController c = Plugin.Controller;
+			Collider2D g = c.LastGround;
+			Plugin.Log.LogInfo("  soar " + (i * 0.2f).ToString("0.0") + "s at " + (Vector2)h.transform.position + " active " + c.Active + " ground " + c.OnGround + " speed " + c.Speed + " game ground " + h.cState.onGround + " can soar " + h.CanSuperJump() + " floor " + c.FloorUnder(h) + " soar step " + (h.superJumpFSM != null ? h.superJumpFSM.ActiveStateName : "-") + " on " + (c.OnGround && g != null ? PathOf(g.transform) + " " + g.GetType().Name + " " + g.bounds : "-"));
+			yield return new WaitForSeconds(0.2f);
+		}
+	}
+
+	private static string PathOf(Transform t)
+	{
+		string s = t.name;
+		for (Transform q = t.parent; q != null; q = q.parent)
+		{
+			s = q.name + "/" + s;
+		}
+		return s;
+	}
+
 	private static void DumpStates(HutongGames.PlayMaker.FsmState[] states)
 	{
 		foreach (HutongGames.PlayMaker.FsmState st in states)
@@ -1393,7 +1654,7 @@ public class BossRematch : MonoBehaviour
 	private void Update()
 	{
 		SyncGround();
-		GameManager gp = GameManager.SilentInstance;
+		GameManager gp = Lookup.Gm;
 		if (gp != null && gp.isPaused && !Active && !AssistMode.IsOpen && CelesteMenus.pauseRematchRect.width > 0f)
 		{
 			UnityEngine.InputSystem.Keyboard ik = UnityEngine.InputSystem.Keyboard.current;
@@ -1408,7 +1669,7 @@ public class BossRematch : MonoBehaviour
 		{
 			// dev: why Silk Soar does or doesn't start when Clawline is pressed
 			HeroController hh = HeroController.UnsafeInstance;
-			HeroActions acts = ManagerSingleton<InputHandler>.Instance?.inputActions;
+			HeroActions acts = Lookup.Input?.inputActions;
 			if (hh != null && acts != null && acts.SuperDash.WasPressed)
 			{
 				Plugin.Log.LogInfo("Clawline pressed: stick " + acts.MoveVector.Vector + ", down " + acts.Down.IsPressed + ", only down " + AccessTools.Method(typeof(HeroController), "IsPressingOnlyDown")?.Invoke(hh, null) + ", can soar " + hh.CanSuperJump() + ", ground " + hh.cState.onGround + ", hero_state " + hh.hero_state + ", device " + InControl.InputManager.ActiveDevice?.Name);
@@ -1416,7 +1677,7 @@ public class BossRematch : MonoBehaviour
 		}
 		DevCommands();
 		DumpNeedolin();
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		HeroController h = HeroController.UnsafeInstance;
 		string now = SceneManager.GetActiveScene().name;
 		if (now != scene)

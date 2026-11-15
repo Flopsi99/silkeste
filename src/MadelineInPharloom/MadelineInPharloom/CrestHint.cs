@@ -58,7 +58,7 @@ public class CrestHint : MonoBehaviour
 
 	private void Update()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		HeroController h = HeroController.UnsafeInstance;
 		if (gm == null || h == null || gm.IsMenuScene() || !Plugin.Ready)
 		{

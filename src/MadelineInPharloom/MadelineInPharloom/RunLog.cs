@@ -58,7 +58,7 @@ public class RunLog : MonoBehaviour
 
 	public static void Add(string kind, string text)
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm == null || BossRematch.Active || string.IsNullOrEmpty(text))
 		{
 			return;
@@ -143,7 +143,7 @@ public class RunLog : MonoBehaviour
 			return;
 		}
 		checkAt = Time.unscaledTime + 1f;
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		PlayerData pd = PlayerData.instance;
 		if (gm == null || pd == null || gm.IsMenuScene() || HeroController.UnsafeInstance == null)
 		{

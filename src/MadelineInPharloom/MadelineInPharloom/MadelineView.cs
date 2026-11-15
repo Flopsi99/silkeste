@@ -1402,6 +1402,46 @@ public partial class MadelineView
 		return bounds;
 	}
 
+	// A few cutscenes switch Hornet off and play a painted stand-in of her instead ("Fake Hornet", a plain sprite with its
+	// own animation): getting the Faydown Cloak on Mount Fay's summit is one (YoukaiMisha 2026-11-15: Hornet showed there).
+	// The stand-in is found once per room and never drawn; while it's playing, Madeline is drawn where it stands.
+	private static string standInScene;
+
+	private static readonly List<SpriteRenderer> standIns = new List<SpriteRenderer>();
+
+	private SpriteRenderer standIn;
+
+	private bool standInShown;
+
+	private static SpriteRenderer StandIn()
+	{
+		string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+		if (scene != standInScene)
+		{
+			standInScene = scene;
+			standIns.Clear();
+			foreach (SpriteRenderer sr in UnityEngine.Object.FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+			{
+				if (sr != null && sr.name == "Fake Hornet")
+				{
+					standIns.Add(sr);
+				}
+			}
+			if (MadelineTouches.DevOn && standIns.Count > 0)
+			{
+				Plugin.Log.LogInfo("Hornet stand-ins in " + scene + ": " + standIns.Count);
+			}
+		}
+		foreach (SpriteRenderer sr in standIns)
+		{
+			if (sr != null && sr.enabled && sr.gameObject.activeInHierarchy)
+			{
+				return sr;
+			}
+		}
+		return null;
+	}
+
 	private void Draw(HeroController h, float dt)
 	{
 		glider.enabled = false;
@@ -1416,7 +1456,12 @@ public partial class MadelineView
 			ShowPico(on: false);
 			return;
 		}
-		bool flag = meshRenderer != null && meshRenderer.enabled && h.gameObject.activeInHierarchy;
+		standIn = StandIn();
+		if (standIn != null)
+		{
+			standIn.forceRenderingOff = true;
+		}
+		bool flag = meshRenderer != null && ((meshRenderer.enabled && h.gameObject.activeInHierarchy) || standIn != null);
 		if (meshRenderer != null)
 		{
 			meshRenderer.forceRenderingOff = true;
@@ -1430,6 +1475,11 @@ public partial class MadelineView
 		int sortingOrder = meshRenderer.sortingOrder;
 		Bounds bounds2 = DrawBounds(h);
 		Vector3 vector = new Vector3(bounds2.center.x, bounds2.min.y, h.transform.position.z);
+		if (MadelineTouches.DevOn && (standIn != null) != standInShown)
+		{
+			standInShown = standIn != null;
+			Plugin.Log.LogInfo(standInShown ? ("Hornet stand-in playing (" + ((standIn.sprite != null) ? standIn.sprite.name : "-") + "): hidden, Madeline drawn in its place") : "Hornet stand-in done");
+		}
 		float target = 0f;
 		if (ctrl.Active && (ctrl.State == 1 || ctrl.WallSlideDir != 0))
 		{
@@ -1654,6 +1704,11 @@ public partial class MadelineView
 						Achievements.Add("busker");
 					}
 				}
+				if (standIn != null)
+				{
+					Play(Animations.Idle.CelesteAnim);   // the cutscene's stand-in is playing: she waits where it stands
+					return;
+				}
 				if (text.StartsWith("Harpoon", StringComparison.Ordinal))
 				{
 					// the Clawline pull: Celeste's dash, with its afterimages (user 2026-10-21)
@@ -1817,7 +1872,7 @@ public partial class MadelineView
 
 	private static void InputMove(out int mx, out int my)
 	{
-		Vector2 vector = ((ManagerSingleton<InputHandler>.Instance != null && !AssistMode.IsOpen && !BossCard.RecordsOpen) ? ManagerSingleton<InputHandler>.Instance.inputActions.MoveVector.Vector : Vector2.zero);
+		Vector2 vector = ((Lookup.Input != null && !AssistMode.IsOpen && !BossCard.RecordsOpen) ? Lookup.Input.inputActions.MoveVector.Vector : Vector2.zero);
 		mx = ((vector.x > 0.3f) ? 1 : ((vector.x < -0.3f) ? (-1) : 0));
 		my = ((vector.y < -0.5f) ? 1 : ((vector.y > 0.5f) ? (-1) : 0));
 	}

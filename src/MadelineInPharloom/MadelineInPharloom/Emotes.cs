@@ -307,7 +307,7 @@ public class EmoteMenu : MonoBehaviour
 			return;
 		}
 		IS.Keyboard kb = IS.Keyboard.current;
-		HeroActions a = ManagerSingleton<InputHandler>.Instance?.inputActions;
+		HeroActions a = Lookup.Input?.inputActions;
 		if (listening)
 		{
 			Listen(kb);
@@ -389,7 +389,7 @@ public class EmoteMenu : MonoBehaviour
 				listening = false;
 				Sfx.Play(Sounds.MenuToggleOn.Id);
 			}
-			else if (ManagerSingleton<InputHandler>.Instance?.inputActions?.MenuCancel.WasPressed ?? false)
+			else if (Lookup.Input?.inputActions?.MenuCancel.WasPressed ?? false)
 			{
 				listening = false;
 				Sfx.Play(Sounds.MenuUnpause.Id);

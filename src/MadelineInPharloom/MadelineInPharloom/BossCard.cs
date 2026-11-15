@@ -394,7 +394,7 @@ public class BossCard : MonoBehaviour
 	{
 		try
 		{
-			GameManager silentInstance = GameManager.SilentInstance;
+			GameManager silentInstance = Lookup.Gm;
 			if (!__state && __instance.isDead && Instance != null && Instance.curZone != null && silentInstance != null && !silentInstance.IsMenuScene())
 			{
 				string key = Key(silentInstance.profileID, Instance.curZone);
@@ -448,7 +448,7 @@ public class BossCard : MonoBehaviour
 			Assist = (AssistMode.AnyOn || AssistMode.SaveMarked),
 			Invincible = AssistMode.Invincible
 		};
-		GameManager instance = GameManager.instance;
+		GameManager instance = Lookup.Gm;
 		Instance.Load();
 		Instance.fight.HadGolden = Instance.HasGolden(id);
 		Instance.fight.FirstTry = instance == null || !Instance.deaths.TryGetValue(Key(instance.profileID, id), out var value) || value == 0;
@@ -701,7 +701,7 @@ public class BossCard : MonoBehaviour
 	/// <summary>F10's "rematch every boss": puts the rematch bosses into Records now.</summary>
 	public void ImportRematches()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm != null && PlayerData.instance != null)
 		{
 			WatchDefeats(gm, PlayerData.instance);
@@ -832,7 +832,7 @@ public class BossCard : MonoBehaviour
 		openFromPauseAt = Time.unscaledTime;
 		try
 		{
-			UIManager.instance.TogglePauseGame();
+			Lookup.Ui.TogglePauseGame();
 		}
 		catch (Exception e)
 		{
@@ -843,7 +843,7 @@ public class BossCard : MonoBehaviour
 	private void UpdateViewer(HeroController h, GameManager gm)
 	{
 		Keyboard current = Keyboard.current;
-		InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance = Lookup.Input;
 		HeroActions heroActions = ((instance != null) ? instance.inputActions : null);
 		float unscaledDeltaTime = Time.unscaledDeltaTime;
 		if (!viewing)
@@ -1212,7 +1212,7 @@ public class BossCard : MonoBehaviour
 		{
 			return;
 		}
-		GameManager silentInstance2 = GameManager.SilentInstance;
+		GameManager silentInstance2 = Lookup.Gm;
 		if (!(silentInstance2 == null))
 		{
 			float num = 4f;
@@ -1500,7 +1500,7 @@ public class BossCard : MonoBehaviour
 
 	private int ViewCount()
 	{
-		GameManager silentInstance = GameManager.SilentInstance;
+		GameManager silentInstance = Lookup.Gm;
 		if (silentInstance == null)
 		{
 			return 0;
@@ -1628,7 +1628,7 @@ public class BossCard : MonoBehaviour
 
 	private void DrawViewer()
 	{
-		GameManager silentInstance = GameManager.SilentInstance;
+		GameManager silentInstance = Lookup.Gm;
 		if (silentInstance == null)
 		{
 			return;
@@ -2944,7 +2944,7 @@ public class BossCard : MonoBehaviour
 			return;
 		}
 		HeroController silentInstance = HeroController.UnsafeInstance;
-		GameManager silentInstance2 = GameManager.SilentInstance;
+		GameManager silentInstance2 = Lookup.Gm;
 		PlayerData instance = PlayerData.instance;
 		if (silentInstance2 != null && silentInstance2.IsMenuScene() && (fromMenu || viewing || viewT > 0f))
 		{
@@ -3536,7 +3536,7 @@ public class BossCard : MonoBehaviour
 
 	private static bool Confirm()
 	{
-		InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance = Lookup.Input;
 		Keyboard current = Keyboard.current;
 		if (instance != null && instance.inputActions != null && instance.inputActions.Jump.WasPressed)
 		{

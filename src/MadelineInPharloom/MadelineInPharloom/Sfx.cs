@@ -276,7 +276,7 @@ public static class Sfx
 		EnsureSource();
 		// menus (title, pause, Settings, Records) play on their own source: the gameplay one goes through Silksong's
 		// gameplay mixer, which the game turns down while paused and in menus (user 2026-10-18: no menu sounds)
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		bool inMenu = gm == null || gm.IsMenuScene() || gm.isPaused || AssistMode.IsOpen || BossCard.RecordsOpen;
 		if (source != null && !inMenu)
 		{

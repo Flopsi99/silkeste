@@ -114,7 +114,7 @@ public class MadelineTouches : MonoBehaviour
 
 	private void MarkMap()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm == null || gm.gameMap == null || CompassField == null)
 		{
 			return;
@@ -201,7 +201,7 @@ public class MadelineTouches : MonoBehaviour
 	private void CheckBenches()
 	{
 		HeroController h = HeroController.UnsafeInstance;
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		string scene = SceneManager.GetActiveScene().name;
 		if (h == null || gm == null || gm.IsMenuScene() || !AssistMode.BenchFlagsOn)
 		{

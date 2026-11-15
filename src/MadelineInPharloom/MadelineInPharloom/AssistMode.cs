@@ -862,7 +862,7 @@ public class AssistMode : MonoBehaviour
 
 	private static bool InSave(out GameManager gm)
 	{
-		gm = GameManager.SilentInstance;
+		gm = Lookup.Gm;
 		if (gm != null && !gm.IsMenuScene() && gm.profileID > 0)
 		{
 			return HeroController.UnsafeInstance != null;
@@ -1659,7 +1659,7 @@ public class AssistMode : MonoBehaviour
 			return;   // the Emotes menu has the keys
 		}
 		HeroController silentInstance = HeroController.UnsafeInstance;
-		GameManager silentInstance2 = GameManager.SilentInstance;
+		GameManager silentInstance2 = Lookup.Gm;
 		bool num = Plugin.Ready && silentInstance != null && silentInstance2 != null && !silentInstance2.IsMenuScene() && silentInstance2.GameState != GameState.MAIN_MENU;
 		if (fromMenu && (silentInstance2 == null || !silentInstance2.IsMenuScene()))
 		{
@@ -1678,7 +1678,7 @@ public class AssistMode : MonoBehaviour
 		if (fromMenu)
 		{
 			Keyboard current = Keyboard.current;
-			InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+			InputHandler instance = Lookup.Input;
 			HeroActions a = ((instance != null) ? instance.inputActions : null);
 			openT = Math.Min(1f, openT + unscaledDeltaTime / 0.25f);
 			if (PromptTick(current, a))
@@ -1747,7 +1747,7 @@ public class AssistMode : MonoBehaviour
 		SetSpeed(GameSpeed);
 		bool flag4 = silentInstance2.GameState == GameState.PLAYING && !silentInstance2.isPaused && !silentInstance.cState.transitioning && !silentInstance.cState.dead && !silentInstance.cState.hazardDeath;
 		Keyboard current2 = Keyboard.current;
-		InputHandler instance2 = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance2 = Lookup.Input;
 		HeroActions heroActions = ((instance2 != null) ? instance2.inputActions : null);
 		tauntHeld = (((heroActions?.Taunt.IsPressed ?? false) && flag4) ? (tauntHeld + unscaledDeltaTime) : 0f);
 		bool flag5 = KeyPressed(AssistOptions.KeySettings) || (tauntHeld >= 1f && !open);

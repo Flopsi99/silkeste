@@ -48,7 +48,7 @@ public class MirrorMode : MonoBehaviour
 
 	private void Update()
 	{
-		GameCameras silentInstance = GameCameras.SilentInstance;
+		GameCameras silentInstance = Lookup.Cams;
 		Camera camera = ((silentInstance != null) ? silentInstance.mainCamera : null);
 		if (!(camera == null) && !(camera == attachedTo))
 		{

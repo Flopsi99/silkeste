@@ -483,7 +483,7 @@ public class SaveSplit : MonoBehaviour
 
 	private void OnGUI()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		GuiArt art = AssistMode.Art;
 		if (Notice == null || art == null || gm == null || !gm.IsMenuScene() || Event.current.type != EventType.Repaint)
 		{
@@ -515,7 +515,7 @@ public class SaveSplit : MonoBehaviour
 
 	private void Update()
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (Notice == null || gm == null || !gm.IsMenuScene())
 		{
 			shownFor = 0f;

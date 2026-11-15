@@ -29,7 +29,7 @@ public class OneHitMode : MonoBehaviour
 		if (silentInstance != null)
 		{
 			// the title's Continue loads the save played last
-			GameManager gmL = GameManager.SilentInstance;
+			GameManager gmL = Lookup.Gm;
 			if (gmL != null && gmL.profileID > 0 && gmL.profileID != rememberedSlot)
 			{
 				rememberedSlot = gmL.profileID;
@@ -78,7 +78,7 @@ public class OneHitMode : MonoBehaviour
 			hidden.Clear();
 			return;
 		}
-		GameCameras silentInstance = GameCameras.SilentInstance;
+		GameCameras silentInstance = Lookup.Cams;
 		if (silentInstance == null || silentInstance.hudCamera == null)
 		{
 			return;

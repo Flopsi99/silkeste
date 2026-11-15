@@ -19,7 +19,7 @@ public static class Feel
 	/// <summary>The whole game stops for this long (real time), like Celeste's Freeze.</summary>
 	public static void Freeze(float secs)
 	{
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		if (gm == null || gm.isPaused || AssistMode.IsOpen || Time.timeScale <= 0f)
 		{
 			return;

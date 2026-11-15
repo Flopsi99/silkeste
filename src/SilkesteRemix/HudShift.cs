@@ -47,7 +47,7 @@ public class HudShift : MonoBehaviour
 		}
 		shown = Mathf.MoveTowards(shown, PanelPixels, Time.unscaledDeltaTime * 1200f);
 		PanelPixels = 0f;
-		GameCameras instance = GameCameras.instance;
+		GameCameras instance = MadelineInPharloom.Lookup.Cams;
 		Camera camera = ((instance != null) ? instance.hudCamera : null);
 		if (camera == null)
 		{

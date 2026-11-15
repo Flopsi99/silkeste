@@ -20,7 +20,7 @@ public static class MenuInputGuard
 	{
 		get
 		{
-			GameManager gm = GameManager.SilentInstance;
+			GameManager gm = Lookup.Gm;
 			return AssistMode.IsOpen || BossCard.RecordsOpen || EmoteMenu.IsOpen || StartingAbilities.IsOpen || TechRoom.InputLocked || (gm != null && gm.isPaused);
 		}
 	}
@@ -56,13 +56,13 @@ public static class MenuInputGuard
 
 	private static bool CastPrefix()
 	{
-		HeroActions a = ManagerSingleton<InputHandler>.Instance?.inputActions;
+		HeroActions a = Lookup.Input?.inputActions;
 		return a == null || !Held(ref castLatch, a.Cast);
 	}
 
 	private static bool QuickPrefix()
 	{
-		HeroActions a = ManagerSingleton<InputHandler>.Instance?.inputActions;
+		HeroActions a = Lookup.Input?.inputActions;
 		return a == null || !Held(ref quickLatch, a.QuickCast);
 	}
 }

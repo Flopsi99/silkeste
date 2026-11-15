@@ -255,7 +255,7 @@ public class Plugin : BaseUnityPlugin
 	{
 		Log = base.Logger;
 		MeltyNetGuard.Install();
-		SaveSplit.Install(new Harmony("silkeste.saves")); LookupThrottle.Patch(new Harmony("silkeste.lookups"));
+		SaveSplit.Install(new Harmony("silkeste.saves"));
 		string text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MadelineInPharloom");
 		skinFile = Path.Combine(text, "skin.cfg");
 		controlsFile = Path.Combine(text, "controls.cfg");
@@ -580,7 +580,7 @@ public class Plugin : BaseUnityPlugin
 		{
 			return;
 		}
-		InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance = Lookup.Input;
 		GameSettings gameSettings = ((instance != null) ? InputSettings(instance) : null);
 		if (gameSettings == null)
 		{
@@ -631,7 +631,7 @@ public class Plugin : BaseUnityPlugin
 			lookTimer = 0f;
 			return;
 		}
-		HeroActions a = ManagerSingleton<InputHandler>.Instance?.inputActions;
+		HeroActions a = Lookup.Input?.inputActions;
 		if (a == null)
 		{
 			return;
@@ -765,10 +765,10 @@ public class Plugin : BaseUnityPlugin
 		if (!(silentInstance == null))
 		{
 			ReadHornetVoice(silentInstance);
-			InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+			InputHandler instance = Lookup.Input;
 			if (instance != null && instance.inputActions != null)
 			{
-				Controller.ReadInput(instance.inputActions);
+				Controller.ReadInput(instance.inputActions, MadelineController.ShouldDrive(silentInstance));
 			}
 		}
 	}
@@ -780,7 +780,7 @@ public class Plugin : BaseUnityPlugin
 			return;
 		}
 		HeroController silentInstance = HeroController.UnsafeInstance;
-		GameManager instance = GameManager.instance;
+		GameManager instance = Lookup.Gm;
 		if (silentInstance == null || instance == null || instance.GameState == GameState.MAIN_MENU || instance.IsMenuScene() || instance.IsTitleScreenScene())
 		{
 			if (view != null)
@@ -851,6 +851,8 @@ public class Plugin : BaseUnityPlugin
 		view.LateUpdate(silentInstance, Time.deltaTime);
 	}
 
+	private static GameObject frostDeath;
+
 	private static void HideHornetDeath(HeroController h)
 	{
 		if (hornetCollections == null)
@@ -877,6 +879,31 @@ public class Plugin : BaseUnityPlugin
 				}
 			}
 			Log.LogInfo("Hornet uses " + hornetCollections.Count + " sprite collections; hidden in death effects");
+		}
+		if (h.cState.isFrostDeath)
+		{
+			// the cold death on Mount Fay: its effect draws Hornet freezing over with a plain sprite ("Hornet_Frost_Death"),
+			// not one of her sprite sheets, so the check below missed it (YoukaiMisha 2026-11-15). Its fade and blue
+			// frost stay
+			if (frostDeath == null)
+			{
+				GameObject prefab = AccessTools.Field(typeof(HeroController), "heroDeathFrostPrefab")?.GetValue(h) as GameObject;
+				frostDeath = GameObject.Find(((prefab != null) ? prefab.name : "Hero_Frost_Death") + "(Clone)");
+			}
+			if (frostDeath != null)
+			{
+				foreach (SpriteRenderer sr in frostDeath.GetComponentsInChildren<SpriteRenderer>(true))
+				{
+					if (sr.name.StartsWith("Hornet", StringComparison.OrdinalIgnoreCase))
+					{
+						if (!sr.forceRenderingOff && MadelineTouches.DevOn)
+						{
+							Log.LogInfo("Frost death: hid " + sr.name);
+						}
+						sr.forceRenderingOff = true;
+					}
+				}
+			}
 		}
 		tk2dBaseSprite[] array = UnityEngine.Object.FindObjectsByType<tk2dBaseSprite>(FindObjectsSortMode.None);
 		foreach (tk2dBaseSprite tk2dBaseSprite in array)
@@ -1111,7 +1138,7 @@ public class Plugin : BaseUnityPlugin
 	private static bool HornetBlocked()
 	{
 		HeroController h = HeroController.UnsafeInstance;
-		GameManager gm = GameManager.SilentInstance;
+		GameManager gm = Lookup.Gm;
 		return Ready && h != null && gm != null && !gm.IsMenuScene() && !h.cState.swimming;
 	}
 

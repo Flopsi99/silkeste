@@ -35,7 +35,7 @@ public class CelesteWipe : MonoBehaviour
 	private void Update()
 	{
 		HeroController silentInstance = HeroController.UnsafeInstance;
-		GameManager instance = GameManager.instance;
+		GameManager instance = Lookup.Gm;
 		bool flag = silentInstance != null && (silentInstance.cState.dead || silentInstance.cState.hazardDeath);
 		float unscaledDeltaTime = Time.unscaledDeltaTime;
 		switch (phase)

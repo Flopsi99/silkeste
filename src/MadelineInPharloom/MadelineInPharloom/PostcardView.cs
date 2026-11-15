@@ -129,7 +129,7 @@ public class PostcardView : MonoBehaviour
 			return;
 		}
 		HeroController silentInstance = HeroController.UnsafeInstance;
-		GameManager silentInstance2 = GameManager.SilentInstance;
+		GameManager silentInstance2 = Lookup.Gm;
 		if (silentInstance == null || silentInstance2 == null)
 		{
 			Hide(silentInstance);
@@ -385,7 +385,7 @@ public class PostcardView : MonoBehaviour
 
 	private static bool ConfirmPressed(Keyboard kb)
 	{
-		InputHandler instance = ManagerSingleton<InputHandler>.Instance;
+		InputHandler instance = Lookup.Input;
 		if (instance != null && instance.inputActions != null && instance.inputActions.Jump.WasPressed)
 		{
 			return true;
