@@ -2900,6 +2900,10 @@ public class MadelineController
 					Plugin.Log.LogWarning("dash hit on " + collider2D.name + " failed: " + ex.Message);
 					continue;
 				}
+				if (hitResponder is TinkEffect)
+				{
+					PushSlideBlocks((TinkEffect)hitResponder, attackDir);
+				}
 				if (hitResponse.response == IHitResponder.Response.DamageEnemy && hitResponder is HealthManager)
 				{
 					HealthManager hurt = (HealthManager)hitResponder;
@@ -3227,6 +3231,42 @@ public class MadelineController
 		ScaleX = 0.6f;
 		ScaleY = 1.4f;
 		Sfx.Play(Sounds.Jump.Id);
+	}
+
+	private static readonly System.Reflection.FieldInfo HitInDirectionField = AccessTools.Field(typeof(HitResponseBase), "HitInDirection");
+
+	/// <summary>
+	/// Silksong's sliding blocks (HitSlidePlatform: the push blocks on the way to Trobbio, user report 2026-11-17) move
+	/// when a needle hit tinks their TinkEffect, which passes the hit's direction on to them. TinkEffect.Hit ignores a
+	/// hit whose source has no DamageEnemies, and the dash's has none, so the dash passes it on itself, the way the
+	/// tink would. The block works out the side it was hit from (where she is) and plays its own hit and slide. Only
+	/// the blocks: the other things that listen for tinks (tilting platforms, weathervanes...) are left as they were.
+	/// </summary>
+	private void PushSlideBlocks(TinkEffect tink, Vector2 attackDir)
+	{
+		Delegate listeners = (HitInDirectionField != null) ? (HitInDirectionField.GetValue(tink) as Delegate) : null;
+		if (listeners == null || hitSource == null)
+		{
+			return;
+		}
+		float x = attackDir.x;
+		float y = 0f - attackDir.y;   // AttackDir is in Celeste's space, y down
+		HitInstance.HitDirection dir = (Math.Abs(x) >= Math.Abs(y)) ? ((x < 0f) ? HitInstance.HitDirection.Left : HitInstance.HitDirection.Right) : ((y > 0f) ? HitInstance.HitDirection.Up : HitInstance.HitDirection.Down);
+		foreach (Delegate d in listeners.GetInvocationList())
+		{
+			if (!(d.Target is HitSlidePlatform))
+			{
+				continue;
+			}
+			try
+			{
+				d.DynamicInvoke(hitSource, dir);
+			}
+			catch (Exception ex)
+			{
+				Plugin.Log.LogWarning("dash push on " + tink.name + " failed: " + (ex.InnerException ?? ex).Message);
+			}
+		}
 	}
 
 	private static void PlaySpikeTink(GameObject spikes, HeroController h)
