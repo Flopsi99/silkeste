@@ -18,7 +18,17 @@ Madeline's art and sounds are read from your own copy of Celeste while you play.
 
 ## Building
 
-You need Hollow Knight: Silksong (Steam), BepInEx 5 in it, and the .NET SDK. The projects reference the game's own DLLs from its install folder (`src/*/*.csproj`), so change those paths if your game is somewhere else.
+You need Hollow Knight: Silksong (Steam), BepInEx 5 in it, and the .NET SDK. The projects reference the game's own DLLs from its install folder. `Directory.Build.props` finds it automatically from Steam's registry entry for Silksong, so any Steam library folder works. If yours isn't found (non-Steam copy, etc.), create `Directory.Build.user.props` next to it (it's gitignored):
+
+```xml
+<Project>
+  <PropertyGroup>
+    <GameDir>D:\Games\Hollow Knight Silksong</GameDir>
+  </PropertyGroup>
+</Project>
+```
+
+or pass it once: `dotnet build -p:GameDir="D:\Games\Hollow Knight Silksong"`.
 
 ```powershell
 ./build.ps1                         # build

@@ -2,8 +2,13 @@
 param([switch]$Install, [switch]$Package, [string]$Version)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
+# Melty's bundled .NET if it's there, else the dotnet on PATH
 $dotnet = Join-Path $env:USERPROFILE '.melty-tools\dotnet\dotnet.exe'
-$game = 'C:\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong'
+if (-not (Test-Path $dotnet)) { $dotnet = (Get-Command dotnet -ErrorAction Stop).Source }
+# the game folder comes from Directory.Build.props (Steam's registered install, or Directory.Build.user.props)
+$game = (& $dotnet msbuild (Join-Path $root 'src\MadelineInPharloom\MadelineInPharloom.csproj') -nologo -getProperty:GameDir 2>$null | Select-Object -Last 1)
+if ($LASTEXITCODE -ne 0 -or -not $game) { $game = 'C:\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong' }
+$game = $game.Trim()
 $plug = Join-Path $game 'BepInEx\plugins\MadelineInPharloom'
 
 # the main plugin first: Extras and Remix compile against its output

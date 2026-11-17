@@ -5,9 +5,6 @@
     <AssemblyName>SilkesteExtras</AssemblyName><GenerateAssemblyInfo>false</GenerateAssemblyInfo><AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>Silkeste</Product>
     <Version>1.4.0</Version>
-    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong</GameDir>
-    <Managed>$(GameDir)\Hollow Knight Silksong_Data\Managed</Managed>
-    <BepInExCore>$(USERPROFILE)\.melty-tools\bepinex5\BepInEx\core</BepInExCore>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <!-- compile against Unity's own .NET profile (it has Span, which Unity 6 APIs use) -->
     <NoStdLib>true</NoStdLib>

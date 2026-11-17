@@ -1,0 +1,28 @@
+<Project>
+  <!--
+    Shared build settings for every project under src/. MSBuild loads this file automatically.
+
+    Where is the game? In order:
+      1. GameDir passed on the command line (dotnet build -p:GameDir=...)
+      2. GameDir set in Directory.Build.user.props next to this file (not committed, one per machine)
+      3. The folder Steam registered for Silksong (app 1030300), so any Steam library works
+      4. Steam's default install folder
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.user.props" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.user.props')" />
+
+  <PropertyGroup>
+    <GameDir Condition="'$(GameDir)' == '' And '$(OS)' == 'Windows_NT'">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1030300', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Hollow Knight Silksong</GameDir>
+    <GameDir>$(GameDir.TrimEnd('\/'))</GameDir>
+
+    <Managed Condition="'$(Managed)' == ''">$(GameDir)\Hollow Knight Silksong_Data\Managed</Managed>
+
+    <!-- BepInEx: the copy installed in the game, else Melty's tool copy -->
+    <BepInExCore Condition="'$(BepInExCore)' == '' And Exists('$(GameDir)\BepInEx\core\BepInEx.dll')">$(GameDir)\BepInEx\core</BepInExCore>
+    <BepInExCore Condition="'$(BepInExCore)' == ''">$(USERPROFILE)\.melty-tools\bepinex5\BepInEx\core</BepInExCore>
+  </PropertyGroup>
+
+  <Target Name="SilkesteCheckGameDir" BeforeTargets="ResolveAssemblyReferences" Condition="!Exists('$(Managed)\Assembly-CSharp.dll')">
+    <Error Text="Can't find Hollow Knight: Silksong at '$(GameDir)'. Create Directory.Build.user.props next to Directory.Build.props (see README) or build with -p:GameDir=&quot;path\to\Hollow Knight Silksong&quot;." />
+  </Target>
+</Project>

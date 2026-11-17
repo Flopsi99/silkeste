@@ -495,7 +495,7 @@ public class LoadingRunner : MonoBehaviour
 		for (int i = 0; i < 3; i++)
 		{
 			float num = (t * 0.35f + (float)i / 3f) % 1f;
-			Color c = new Color(Cream.r, Cream.g, Cream.b, Mathf.Sin(num * MathF.PI) * 0.9f);
+			Color c = new Color(Cream.r, Cream.g, Cream.b, Mathf.Sin(num * Mathf.PI) * 0.9f);
 			art.DrawOutlined("z", x + dir * num * 40f + Mathf.Sin(num * 6f) * 8f, y - num * 90f, 0.4f + num * 0.3f, c, new Color(Ink.r, Ink.g, Ink.b, c.a), 2f);
 		}
 	}
